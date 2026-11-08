@@ -135,3 +135,42 @@ def split_sentences(text):
         for sentence in sentences
         if sentence.strip()
     ]
+
+
+def markers(sentence):
+    """
+    Extract citation numbers from a sentence.
+
+    Rules:
+    1. Recognize square brackets containing one or more numbers.
+    2. Support comma-separated numbers with or without spaces.
+    3. Support multiple citation markers appearing side by side.
+    4. Ignore brackets containing non-numeric content.
+    5. Return unique citation numbers in their original order.
+
+    Returns:
+        A list of unique citation numbers as integers.
+    """
+
+    result = []
+    seen = set()
+
+    # Find valid citation markers such as [2], [1, 3], or [1,3].
+    citation_groups = re.findall(
+        r'\[(\s*\d+(?:\s*,\s*\d+)*\s*)\]',
+        sentence
+    )
+
+    # Extract individual numbers from each citation marker.
+    for group in citation_groups:
+        for number in group.split(","):
+
+            # Convert the citation number to an integer.
+            number = int(number.strip())
+
+            # Preserve order while removing duplicates.
+            if number not in seen:
+                result.append(number)
+                seen.add(number)
+
+    return result
