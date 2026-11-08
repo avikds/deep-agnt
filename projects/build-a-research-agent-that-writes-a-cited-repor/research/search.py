@@ -97,3 +97,60 @@ def build_index(docs):
             index[term][doc_id] = index[term].get(doc_id, 0) + 1
 
     return index
+
+
+import math
+
+
+def score(index, n_docs, query):
+    """
+    Score documents based on their relevance to a search query.
+
+    Each query term contributes:
+        term_frequency * inverse_document_frequency
+
+    IDF = log(1 + n_docs / df)
+
+    where:
+        n_docs = Total number of documents.
+        df     = Number of documents containing the term.
+
+    Returns:
+        A dictionary mapping document IDs to scores rounded
+        to three decimal places.
+    """
+
+    scores = {}
+
+    # Convert the query into search terms.
+    query_terms = tokenize(query)
+
+    # Process every query term, including repeated terms.
+    for term in query_terms:
+
+        # Ignore terms that do not exist in the index.
+        if term not in index:
+            continue
+
+        # Get the documents containing this term.
+        postings = index[term]
+
+        # Calculate document frequency.
+        df = len(postings)
+
+        # Avoid division by zero for an empty posting list.
+        if df == 0:
+            continue
+
+        # Calculate inverse document frequency.
+        idf = math.log(1 + n_docs / df)
+
+        # Add this term's contribution to each document's score.
+        for doc_id, count in postings.items():
+            scores[doc_id] = scores.get(doc_id, 0) + count * idf
+
+    # Round final scores to three decimal places.
+    return {
+        doc_id: round(value, 3)
+        for doc_id, value in scores.items()
+    }
