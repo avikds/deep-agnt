@@ -76,3 +76,66 @@ def parse_lines(text):
             seen.add(line)
 
     return items
+
+
+def dedupe_questions(questions, threshold=0.8):
+    """
+    Remove near-duplicate research questions using Jaccard similarity.
+
+    Two questions are considered near-duplicates when the Jaccard
+    similarity of their token sets is greater than or equal to
+    the specified threshold.
+
+    Rules:
+    1. Tokenize each question using the existing tokenize() function.
+    2. Convert tokens into sets to remove repeated terms.
+    3. Compare each question against previously retained questions.
+    4. Keep the first question from each near-duplicate group.
+    5. Two empty token sets are considered duplicates.
+
+    Parameters:
+        questions: List of research questions.
+        threshold: Minimum Jaccard similarity for considering
+                   two questions duplicates (default 0.8).
+
+    Returns:
+        A list of questions with near-duplicates removed,
+        preserving their original order.
+    """
+
+    kept = []
+    kept_sets = []
+
+    # Process questions in their original order.
+    for question in questions:
+
+        # Convert the question into a set of search terms.
+        terms = set(tokenize(question))
+
+        # Check against previously retained questions only.
+        is_duplicate = False
+
+        for existing_terms in kept_sets:
+
+            # Two empty sets are considered duplicates.
+            if not terms and not existing_terms:
+                is_duplicate = True
+                break
+
+            # Calculate Jaccard similarity.
+            union = terms | existing_terms
+            intersection = terms & existing_terms
+
+            similarity = len(intersection) / len(union)
+
+            # Reject the question if similarity meets the threshold.
+            if similarity >= threshold:
+                is_duplicate = True
+                break
+
+        # Retain only questions that are not near-duplicates.
+        if not is_duplicate:
+            kept.append(question)
+            kept_sets.append(terms)
+
+    return kept
