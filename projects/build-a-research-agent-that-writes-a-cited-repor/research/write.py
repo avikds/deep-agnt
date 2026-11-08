@@ -95,3 +95,43 @@ def writer_prompt(question, findings, numbers):
     )
 
     return prompt
+
+
+def split_sentences(text):
+    """
+    Split a report into individual sentences while preserving
+    citation markers.
+
+    Rules:
+    1. A sentence ends at '.', '?' or '!' when followed by
+       whitespace or the end of the text.
+    2. A newline also ends a sentence.
+    3. Citation markers appearing after punctuation are moved
+       immediately before the punctuation.
+    4. Whitespace following citation markers is preserved.
+    5. Empty pieces are discarded.
+    """
+
+    # Move citation markers after punctuation to before punctuation.
+    # Importantly, do not consume whitespace following the markers.
+    text = re.sub(
+        r'([.!?])[ \t]*(\[\d+\](?:[ \t]+\[\d+\])*)',
+        r' \2\1',
+        text
+    )
+
+    # Split at sentence-ending punctuation followed by whitespace,
+    # or at newline characters.
+    # Decimal numbers such as 4.6 are not split because the
+    # decimal point is not followed by whitespace.
+    sentences = re.split(
+        r'(?<=[.!?])\s+|\r?\n+',
+        text
+    )
+
+    # Remove surrounding whitespace and discard empty sentences.
+    return [
+        sentence.strip()
+        for sentence in sentences
+        if sentence.strip()
+    ]
