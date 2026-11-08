@@ -65,3 +65,35 @@ def tokenize(text):
     ]
 
     return tokens
+
+
+def build_index(docs):
+    """
+    Build an inverted index from a collection of documents.
+
+    The index maps:
+        term -> document_id -> occurrence_count
+
+    Each document is expected to contain:
+        - id: The document's unique identifier.
+        - text: The document's textual content.
+    """
+
+    index = {}
+
+    # Process each document in the corpus.
+    for doc in docs:
+        doc_id = doc["id"]
+        text = doc["text"]
+
+        # Convert the document text into search terms.
+        terms = tokenize(text)
+
+        # Count each term's occurrences in this document.
+        for term in terms:
+            if term not in index:
+                index[term] = {}
+
+            index[term][doc_id] = index[term].get(doc_id, 0) + 1
+
+    return index
