@@ -79,3 +79,86 @@ def parse_findings(text, allowed):
         })
 
     return findings
+
+
+def worker_prompt(subquestion, hits, docs):
+    """
+    Build a research prompt containing a sub-question
+    and only the company notes selected by search.
+
+    Parameters:
+        subquestion: Research question assigned to the worker.
+        hits: Search results containing document IDs.
+        docs: Complete collection of company documents.
+
+    Returns:
+        A formatted prompt containing:
+        - The research sub-question.
+        - The permitted notes with their IDs and titles.
+        - The required findings output format.
+
+    Notes whose IDs are not found in docs are skipped.
+    """
+
+    # Create a lookup dictionary for documents by ID.
+    docs_by_id = {
+        doc["id"]: doc
+        for doc in docs
+    }
+
+    # Collect only the notes referenced by the search hits.
+    note_blocks = []
+
+    for hit in hits:
+
+        # Get the document ID from the search result.
+        doc_id = hit.get("id")
+
+        # Skip hits without an ID or without a corresponding document.
+        if not doc_id or doc_id not in docs_by_id:
+            continue
+
+        # Retrieve the original document.
+        doc = docs_by_id[doc_id]
+
+        # Include the note ID and title, followed by its full text.
+        note_blocks.append(
+            f"NOTE {doc_id}: {doc['title']}\n"
+            f"{doc['text']}"
+        )
+
+    # Combine all permitted notes in their original hit order.
+    notes = "\n\n".join(note_blocks)
+
+    # Construct the researcher's instructions.
+    prompt = (
+        "You are a careful company research assistant.\n\n"
+
+        "SUB-QUESTION:\n"
+        f"{subquestion}\n\n"
+
+        "PERMITTED SOURCE MATERIAL:\n"
+        "You may use ONLY the notes provided below. "
+        "Do not use outside knowledge, assumptions, or "
+        "information from any other source. "
+        "Every finding must be supported by one of these notes.\n\n"
+
+        "NOTES:\n"
+        f"{notes}\n\n"
+
+        "OUTPUT REQUIREMENTS:\n"
+        "Return one finding per line using exactly this format:\n"
+        'claim | SOURCE_ID | "exact quote copied from the note"\n\n'
+
+        "Provide at most four findings. "
+        "The source ID must match the corresponding note ID. "
+        "Every quote must be copied exactly from the note "
+        "you are citing. Do not invent, paraphrase, or alter "
+        "quotes.\n\n"
+
+        "Return only the findings, one per line. "
+        "Do not include headings, numbering, bullet points, "
+        "introductions, explanations, or any other text."
+    )
+
+    return prompt
