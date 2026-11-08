@@ -106,3 +106,56 @@ def supported(finding, docs):
 
     # No matching source or quotation was found.
     return False
+
+
+def report_card(report, findings, docs):
+    """
+    Evaluate a research report for citation coverage
+    and supporting evidence.
+
+    Parameters:
+        report: Generated report text.
+        findings: List of research findings containing
+                  claim, source_id, and quote.
+        docs: Original company documents.
+
+    Returns:
+        A dictionary containing:
+        - sentences: Total number of report sentences.
+        - cited: Number of sentences with valid citations.
+        - uncited: Sentences without valid citations.
+        - unsupported: Claims whose quotations are not
+                       supported by their original source notes.
+    """
+
+    # Step 1: Split the report into individual sentences.
+    sentences = split_sentences(report)
+
+    # Step 2: Determine the number of unique sources.
+    order, numbers = number_sources(findings)
+    n_sources = len(order)
+
+    # Step 3: Find sentences without valid citations.
+    uncited_sentences = uncited(
+        report,
+        n_sources
+    )
+
+    # Step 4: Count sentences containing valid citations.
+    cited_count = len(sentences) - len(uncited_sentences)
+
+    # Step 5: Check every finding against its original source.
+    # Keep the claims whose quotations are not supported.
+    unsupported_claims = [
+        finding["claim"]
+        for finding in findings
+        if not supported(finding, docs)
+    ]
+
+    # Step 6: Return the complete report assessment.
+    return {
+        "sentences": len(sentences),
+        "cited": cited_count,
+        "uncited": uncited_sentences,
+        "unsupported": unsupported_claims
+    }
