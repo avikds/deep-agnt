@@ -2,7 +2,7 @@
 
 A research pipeline as 26 small functions: a planner that splits the question, researchers that read notes in parallel, a writer that cites by number, and a checker that every sentence has a real source.
 
-Built step by step on [Deep-Agnt](https://deep-agnt.com/projects/research-agent): 15 of 26 steps passed, each graded by tests.
+Built step by step on [Deep-Agnt](https://deep-agnt.com/projects/research-agent): 16 of 26 steps passed, each graded by tests.
 
 - [x] Step 1: Cut a word to its stem
 - [x] Step 2: Turn text into search terms
@@ -19,3 +19,4 @@ Built step by step on [Deep-Agnt](https://deep-agnt.com/projects/research-agent)
 - [x] Step 13: One researcher, on a real model
 - [x] Step 14: Researchers in parallel, under a budget
 - [x] Step 15: Merge what came back
+- [x] Step 16: Number the sources
