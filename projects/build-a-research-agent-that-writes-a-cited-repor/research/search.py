@@ -219,3 +219,70 @@ def snippet(text, terms, width=90):
         window = window + "..."
 
     return window
+
+
+def search(docs, query, k=3, kind=None):
+    """
+    Search company notes and return the best matching documents.
+
+    Parameters:
+        docs: List of documents containing id, title, text,
+              and optionally kind.
+        query: Search query entered by the user.
+        k: Maximum number of results to return.
+        kind: Optional document type filter.
+
+    Returns:
+        A list of matching documents containing:
+        id, title, score, and snippet.
+
+    Results are ordered by:
+        1. Highest score first.
+        2. Document ID alphabetically for equal scores.
+    """
+
+    # Return an empty list if no results are requested.
+    if k <= 0:
+        return []
+
+    # Build an inverted index from the available documents.
+    index = build_index(docs)
+
+    # Calculate relevance scores for the query.
+    scores = score(index, len(docs), query)
+
+    # Tokenize the query for generating result snippets.
+    query_terms = tokenize(query)
+
+    results = []
+
+    # Examine each document and retain matching documents.
+    for doc in docs:
+        doc_id = doc["id"]
+
+        # Skip documents that do not match any query term.
+        if doc_id not in scores:
+            continue
+
+        # Apply the optional document kind filter.
+        if kind is not None and doc.get("kind") != kind:
+            continue
+
+        # Generate a snippet showing where the query matched.
+        text_snippet = snippet(doc["text"], query_terms)
+
+        # Store the required result fields.
+        results.append({
+            "id": doc_id,
+            "title": doc["title"],
+            "score": scores[doc_id],
+            "snippet": text_snippet
+        })
+
+    # Sort by descending score, then ascending document ID.
+    results.sort(
+        key=lambda hit: (-hit["score"], hit["id"])
+    )
+
+    # Return only the top k matching documents.
+    return results[:k]
