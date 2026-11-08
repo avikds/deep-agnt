@@ -44,67 +44,58 @@ def uncited(report, n_sources):
 
 def supported(finding, docs):
     """
-    Verify whether a finding's quote exists in its original source note.
+    Verify whether a finding's quote appears in its original note.
 
-    Parameters:
-        finding: Dictionary containing:
-            - source_id: ID of the source document.
-            - quote: Exact quotation to verify.
-
-        docs: List of company documents containing:
-            - id: Unique document identifier.
-            - text: Original document text.
-
-    Returns:
-        True if the quote appears in the text of the matching
-        source document, otherwise False.
-
-    Verification rules:
-    1. Find the document matching the finding's source_id.
-    2. Return False if no matching document exists.
-    3. Return False if the quote is empty.
-    4. Collapse whitespace into single spaces.
-    5. Ignore uppercase and lowercase differences.
-    6. Check whether the normalized quote appears in the
-       normalized document text.
+    Source IDs are matched case-insensitively.
+    Quote verification ignores case and whitespace differences only.
     """
 
-    # Retrieve the source ID and quotation.
     source_id = finding.get("source_id")
     quote = finding.get("quote")
 
-    # An empty or non-string quotation is not valid evidence.
     if not isinstance(quote, str) or not quote.strip():
         return False
 
-    # Normalize the quotation:
-    # collapse whitespace and ignore case.
-    normalized_quote = " ".join(quote.split()).casefold()
+    # Normalize the source ID.
+    normalized_id = str(source_id).strip().upper()
 
-    # Search for the matching source document.
+    normalized_id = re.sub(
+        r"^NOTE\s+",
+        "",
+        normalized_id,
+        flags=re.IGNORECASE
+    ).strip()
+
+    # Normalize the quotation.
+    normalized_quote = " ".join(
+        quote.split()
+    ).casefold()
+
+    # Find the corresponding original document.
     for doc in docs:
+        doc_id = str(doc.get("id", "")).strip().upper()
 
-        if not isinstance(doc, dict):
+        doc_id = re.sub(
+            r"^NOTE\s+",
+            "",
+            doc_id,
+            flags=re.IGNORECASE
+        ).strip()
+
+        if doc_id != normalized_id:
             continue
 
-        # Match the source ID to the document ID.
-        if doc.get("id") != source_id:
-            continue
-
-        # Retrieve the original note text.
         note_text = doc.get("text", "")
 
         if not isinstance(note_text, str):
-            continue
+            return False
 
-        # Normalize the original note using the same rules.
-        normalized_text = " ".join(note_text.split()).casefold()
+        normalized_text = " ".join(
+            note_text.split()
+        ).casefold()
 
-        # Check whether the complete quotation exists in the note.
-        if normalized_quote in normalized_text:
-            return True
+        return normalized_quote in normalized_text
 
-    # No matching source or quotation was found.
     return False
 
 
