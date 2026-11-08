@@ -25,8 +25,6 @@ def stem(word):
 
 import re
 
-# Use the project's STOPWORDS if already defined.
-# Otherwise, provide a default set of common English stopwords.
 if "STOPWORDS" not in globals():
     STOPWORDS = {
         "a", "an", "the", "and", "or", "but",
