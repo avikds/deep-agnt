@@ -139,3 +139,72 @@ def dedupe_questions(questions, threshold=0.8):
             kept_sets.append(terms)
 
     return kept
+
+
+def plan(question, model, limit=3):
+    """
+    Ask a real model to divide a research question into
+    focused sub-questions that can be answered using
+    company notes.
+
+    Parameters:
+        question: The original research question.
+        model: Model object providing the chat() method.
+        limit: Maximum number of sub-questions to return.
+
+    Returns:
+        A list of unique, clean research sub-questions.
+    """
+
+    # Define instructions for the research planner.
+    system = (
+        "You are a research planning assistant. "
+        "Your task is to break a research question into "
+        "focused, specific, and independently answerable "
+        "sub-questions that can be investigated using "
+        "a company's notes. "
+        "Keep the questions relevant to the original question. "
+        "Avoid asking overlapping or duplicate questions. "
+        "Do not answer the questions or invent facts. "
+        "Return only the sub-questions, with exactly one "
+        "question per line. Do not include numbering, "
+        "bullet points, headings, explanations, or any "
+        "other text."
+    )
+
+    # Construct the prompt for the model.
+    prompt = (
+        f"Research question: {question}\n\n"
+        f"Generate at most {limit} distinct sub-questions "
+        "that together cover the important aspects of "
+        "the research question.\n\n"
+        "Return one sub-question per line and nothing else."
+    )
+
+    # Prepare the conversation messages.
+    messages = [
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+
+    # Make one call to the model.
+    reply = model.chat(
+        messages,
+        [],
+        system,
+        500
+    )
+
+    # Extract text from the model's response.
+    text = reply_text(reply)
+
+    # Parse the response into individual questions.
+    questions = parse_lines(text)
+
+    # Remove near-duplicate questions.
+    questions = dedupe_questions(questions)
+
+    # Return at most the requested number of questions.
+    return questions[:max(0, limit)]
