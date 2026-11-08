@@ -297,3 +297,55 @@ def research_all(subquestions, docs, model, budget=4, workers=3):
             results[subquestion] = findings
 
     return results
+
+
+def merge_findings(by_subquestion):
+    """
+    Merge findings from multiple research sub-questions.
+
+    Parameters:
+        by_subquestion: Dictionary mapping sub-questions to
+                        lists of research findings.
+
+    Returns:
+        A flattened list of unique findings.
+
+    Duplicate detection:
+        - Source IDs must match.
+        - Quotes are compared after collapsing whitespace.
+        - Quote comparison ignores letter case.
+
+    The first occurrence of each finding is preserved exactly
+    as it appeared in the original findings.
+    """
+
+    merged = []
+    seen = set()
+
+    # Process sub-questions in dictionary insertion order.
+    for subquestion, findings in by_subquestion.items():
+
+        # Process each researcher's findings in their original order.
+        for finding in findings or []:
+
+            # Obtain the source ID.
+            source_id = str(finding["source_id"]).strip().upper()
+
+            # Normalize the quote for duplicate comparison only.
+            # Collapse whitespace and ignore letter case.
+            normalized_quote = " ".join(
+                finding["quote"].split()
+            ).casefold()
+
+            # A duplicate is identified by its source ID and quote.
+            key = (source_id, normalized_quote)
+
+            # Skip findings that have already been included.
+            if key in seen:
+                continue
+
+            # Preserve the original finding without modifying it.
+            merged.append(finding)
+            seen.add(key)
+
+    return merged
