@@ -162,3 +162,68 @@ def worker_prompt(subquestion, hits, docs):
     )
 
     return prompt
+
+
+def research(subquestion, docs, model, k=4):
+    """
+    Run one research worker to answer a sub-question
+    using relevant company notes.
+
+    Parameters:
+        subquestion: Research question assigned to the worker.
+        docs: Complete collection of company documents.
+        model: Model object providing the chat() method.
+        k: Maximum number of notes to retrieve (default 4).
+
+    Returns:
+        A list of validated findings, each containing:
+        - claim
+        - source_id
+        - quote
+
+    Only sources returned by search() are permitted.
+    """
+
+    # Step 1: Retrieve the most relevant company notes.
+    hits = search(docs, subquestion, k=k)
+
+    # Step 2: Collect the IDs of the permitted source notes.
+    allowed = {
+        hit["id"]
+        for hit in hits
+    }
+
+    # Step 3: Prepare the researcher's prompt.
+    prompt = worker_prompt(
+        subquestion,
+        hits,
+        docs
+    )
+
+    # Step 4: Send the research task to the model.
+    # The researcher receives only the notes included in the prompt.
+    reply = model.chat(
+        [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        [],
+        "You are a careful company research assistant. "
+        "Follow the research instructions exactly. "
+        "Use only the supplied notes and never invent "
+        "claims or quotations.",
+        800
+    )
+
+    # Step 5: Extract the textual response.
+    response_text = reply_text(reply)
+
+    # Step 6: Parse findings and reject unauthorized sources.
+    findings = parse_findings(
+        response_text,
+        allowed
+    )
+
+    return findings
