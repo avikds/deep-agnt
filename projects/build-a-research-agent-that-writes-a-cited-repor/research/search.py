@@ -154,3 +154,68 @@ def score(index, n_docs, query):
         doc_id: round(value, 3)
         for doc_id, value in scores.items()
     }
+
+
+def snippet(text, terms, width=90):
+    """
+    Return a short window of text around the first occurrence
+    of any search term.
+
+    Rules:
+    1. Find the earliest occurrence of any term in lowercase text.
+    2. If no term matches, start at position 0.
+    3. Start one-third of the window width before the match.
+    4. Move forward to the next word boundary if necessary.
+    5. Extract the requested width and avoid cutting a word
+       at the end of the window.
+    6. Add ellipses where text has been omitted.
+    """
+
+    # Convert text to lowercase for case-insensitive matching.
+    lower_text = text.lower()
+
+    # Find the positions of all matching search terms.
+    positions = []
+
+    for term in terms:
+        term = term.lower()
+        position = lower_text.find(term)
+
+        if position != -1:
+            positions.append(position)
+
+    # Use the earliest match, or position 0 if nothing matches.
+    match_position = min(positions) if positions else 0
+
+    # Start approximately one-third of the window before the match.
+    start = max(0, match_position - width // 3)
+
+    # Move forward to the next word boundary when start is not 0.
+    if start != 0:
+        next_space = text.find(" ", start)
+
+        if next_space != -1:
+            start = next_space + 1
+
+    # Extract the requested window of text.
+    window = text[start:start + width]
+
+    # Check whether the window reaches the end of the original text.
+    reaches_end = start + width >= len(text)
+
+    # Avoid leaving a partially cut word at the end.
+    if not reaches_end:
+        last_space = window.rfind(" ")
+
+        if last_space != -1:
+            window = window[:last_space]
+
+    # Add leading ellipsis when earlier text was omitted.
+    if start != 0:
+        window = "..." + window
+
+    # Add trailing ellipsis when later text was omitted.
+    if not reaches_end:
+        window = window + "..."
+
+    return window
