@@ -174,3 +174,58 @@ def markers(sentence):
                 seen.add(number)
 
     return result
+
+
+def renumber(report):
+    """
+    Renumber citation markers according to their first appearance.
+
+    Parameters:
+        report: Report text containing numbered citation markers.
+
+    Returns:
+        A tuple containing:
+        - text: Report with citation numbers renumbered.
+        - mapping: Dictionary mapping old citation numbers
+                   to their new 1-based citation numbers.
+
+    Rules:
+    1. Process citation markers from left to right.
+    2. The first unique citation number becomes 1.
+    3. Each subsequent new citation number receives the next number.
+    4. Repeated citation numbers retain their assigned numbers.
+    5. Preserve all text and formatting outside citation numbers.
+    6. Reports without citations remain unchanged.
+    """
+
+    mapping = {}
+
+    # Replace valid citation markers while preserving their formatting.
+    def replace_marker(match):
+
+        # Replace each number inside the citation marker.
+        def replace_number(number_match):
+            old_number = int(number_match.group())
+
+            # Assign a new number on the first occurrence.
+            if old_number not in mapping:
+                mapping[old_number] = len(mapping) + 1
+
+            return str(mapping[old_number])
+
+        # Change only the numbers, preserving brackets,
+        # commas, and whitespace.
+        return re.sub(
+            r'\d+',
+            replace_number,
+            match.group()
+        )
+
+    # Match numeric citation markers such as [3], [1, 3], and [3][1].
+    text = re.sub(
+        r'\[\s*\d+(?:\s*,\s*\d+)*\s*\]',
+        replace_marker,
+        report
+    )
+
+    return text, mapping
