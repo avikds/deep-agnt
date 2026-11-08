@@ -227,3 +227,73 @@ def research(subquestion, docs, model, k=4):
     )
 
     return findings
+
+
+from concurrent.futures import ThreadPoolExecutor
+
+
+def research_all(subquestions, docs, model, budget=4, workers=3):
+    """
+    Run research for multiple sub-questions under a budget.
+
+    Parameters:
+        subquestions: List of research sub-questions.
+        docs: Complete collection of company documents.
+        model: Model object providing the chat() method.
+        budget: Maximum number of sub-questions to research.
+        workers: Maximum number of parallel workers.
+
+    Returns:
+        A dictionary mapping each researched sub-question
+        to its list of findings.
+
+    Rules:
+    1. Research only the first 'budget' sub-questions.
+    2. Preserve the original sub-question order.
+    3. Use ThreadPoolExecutor when workers > 1.
+    4. Run sequentially when workers <= 1.
+    5. Return [] when a researcher fails or returns nothing.
+    6. One researcher's failure must not stop other researchers.
+    """
+
+    # Select only the sub-questions allowed by the budget.
+    selected = list(subquestions)[:max(0, budget)]
+
+    results = {}
+
+    # Safely execute one research task.
+    def run_one(subquestion):
+        try:
+            findings = research(
+                subquestion,
+                docs,
+                model
+            )
+
+            # Normalize empty or missing findings.
+            return findings if findings else []
+
+        except Exception:
+            # A failed researcher must not interrupt other workers.
+            return []
+
+    # Run research sequentially when only one worker is allowed.
+    if workers <= 1:
+
+        for subquestion in selected:
+            results[subquestion] = run_one(subquestion)
+
+    else:
+        # Run multiple research tasks concurrently.
+        # executor.map() preserves the original input order.
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+
+            findings_list = list(
+                executor.map(run_one, selected)
+            )
+
+        # Combine sub-questions and findings in their original order.
+        for subquestion, findings in zip(selected, findings_list):
+            results[subquestion] = findings
+
+    return results
