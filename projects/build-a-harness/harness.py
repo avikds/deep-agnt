@@ -148,3 +148,22 @@ def call_tool(workspace, block):
     except Exception as exc:
         # Convert tool exceptions into an error response.
         return f"{type(exc).__name__}: {exc}", True
+
+
+def tool_result(block, content, is_error=False):
+    """
+    Format a tool execution result in the structure
+    expected by the model.
+    """
+
+    result = {
+        "type": "tool_result",
+        "tool_use_id": block["id"],
+        "content": str(content)
+    }
+
+    # Include is_error only when an error occurred.
+    if is_error:
+        result["is_error"] = True
+
+    return result
