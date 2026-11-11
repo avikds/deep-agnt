@@ -208,3 +208,28 @@ def text_of(reply):
     ]
 
     return "\n".join(texts).strip()
+
+
+def turn_results(workspace, reply):
+    """
+    Execute every tool_use block in the model's reply,
+    preserve their order, and return all results
+    in a single user message.
+    """
+
+    results = []
+
+    for block in reply.get("content", []):
+        # Ignore text blocks and process only tool calls.
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            content, is_error = call_tool(workspace, block)
+
+            # Convert the execution result into a tool_result block.
+            results.append(
+                tool_result(block, content, is_error)
+            )
+
+    return {
+        "role": "user",
+        "content": results
+    }
