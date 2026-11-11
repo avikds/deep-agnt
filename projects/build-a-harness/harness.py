@@ -233,3 +233,47 @@ def turn_results(workspace, reply):
         "role": "user",
         "content": results
     }
+
+
+def run_coding_agent(task, model, workspace, max_turns=12):
+    """
+    Run the coding agent until the model provides an answer
+    or the maximum number of tool-use turns is reached.
+    """
+
+    # Set the system prompt containing the agent's rules.
+    model.system = system_prompt()
+
+    # Start the conversation with the user's task.
+    messages = open_conversation(task)
+
+    # Allow the agent a maximum number of turns.
+    for _ in range(max_turns):
+        # Send the conversation and available tools to the model.
+        reply = model.chat(messages, tools=tool_specs())
+
+        stop_reason = reply.get("stop_reason")
+
+        # Stop when the model no longer requests tool execution.
+        if stop_reason != "tool_use":
+            answer = text_of(reply)
+
+            if answer:
+                return answer
+
+            return (
+                "The model stopped without an answer "
+                f"(stop_reason={stop_reason})."
+            )
+
+        # Append the model's tool-use response to the conversation.
+        messages.append({
+            "role": "assistant",
+            "content": reply["content"]
+        })
+
+        # Execute the requested tools and append their results.
+        messages.append(turn_results(workspace, reply))
+
+    # Return an explicit reason when the turn limit is reached.
+    return f"Stopped after {max_turns} turns without an answer."
