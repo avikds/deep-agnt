@@ -102,3 +102,22 @@ def run_tool(workspace, name, arguments):
             f"unknown tool '{name}'; the tools are "
             "list_files, read_file, write_file, grep, run_tests"
         )
+
+
+def guard_write(path):
+    """
+    Prevent the coding agent from modifying files
+    inside the tests/ directory.
+    """
+
+    if (
+        path == "tests"
+        or path.startswith("tests/")
+        or "/tests/" in path
+    ):
+        return (
+            f"refused: {path} is under tests/, "
+            "and the tests are not yours to change"
+        )
+
+    return None
