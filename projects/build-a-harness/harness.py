@@ -70,3 +70,35 @@ def format_tests(result):
     return "\n".join(
         [summary] + [f"  {failure}" for failure in failures]
     )
+
+
+def run_tool(workspace, name, arguments):
+    """
+    Execute the requested tool on the workspace
+    and return its result as a string.
+    """
+
+    if name == "list_files":
+        return "\n".join(workspace.list())
+
+    elif name == "read_file":
+        return workspace.read(arguments["path"])
+
+    elif name == "write_file":
+        return workspace.write(
+            arguments["path"],
+            arguments["content"]
+        )
+
+    elif name == "grep":
+        matches = workspace.grep(arguments["pattern"])
+        return "\n".join(matches) if matches else "(no matches)"
+
+    elif name == "run_tests":
+        return format_tests(workspace.run_tests())
+
+    else:
+        raise ValueError(
+            f"unknown tool '{name}'; the tools are "
+            "list_files, read_file, write_file, grep, run_tests"
+        )
