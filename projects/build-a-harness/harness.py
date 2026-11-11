@@ -167,3 +167,15 @@ def tool_result(block, content, is_error=False):
         result["is_error"] = True
 
     return result
+
+
+def system_prompt():
+    """
+    Define the rules and instructions that guide the coding agent.
+    """
+    return (
+        "You are a careful coding agent. Always read each file before changing it. "
+        "When writing a file, provide its complete contents rather than partial changes. "
+        "Run the tests after making changes to verify your work. "
+        "Never change anything under tests/."
+    )
