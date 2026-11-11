@@ -121,3 +121,30 @@ def guard_write(path):
         )
 
     return None
+
+
+def call_tool(workspace, block):
+    """
+    Safely execute a tool-use block and return
+    (content, is_error).
+    """
+
+    try:
+        name = block["name"]
+        arguments = block["input"]
+
+        # Prevent the agent from modifying test files.
+        if name == "write_file":
+            refusal = guard_write(arguments["path"])
+
+            if refusal is not None:
+                return refusal, True
+
+        # Execute the requested tool.
+        content = run_tool(workspace, name, arguments)
+
+        return content, False
+
+    except Exception as exc:
+        # Convert tool exceptions into an error response.
+        return f"{type(exc).__name__}: {exc}", True
