@@ -179,3 +179,15 @@ def system_prompt():
         "Run the tests after making changes to verify your work. "
         "Never change anything under tests/."
     )
+
+
+def open_conversation(task):
+    """
+    Start a new conversation with the task as the first user message.
+    """
+    return [
+        {
+            "role": "user",
+            "content": task
+        }
+    ]
