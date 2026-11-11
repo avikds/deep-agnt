@@ -54,3 +54,19 @@ def tool_specs():
             "Run the project's test suite and return the results."
         )
     ]
+
+
+def format_tests(result):
+    """
+    Format test results with the summary on the first line
+    and each failure indented by two spaces on separate lines.
+    """
+    summary = result["summary"]
+    failures = result.get("failures", [])
+
+    if not failures:
+        return summary
+
+    return "\n".join(
+        [summary] + [f"  {failure}" for failure in failures]
+    )
