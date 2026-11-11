@@ -191,3 +191,20 @@ def open_conversation(task):
             "content": task
         }
     ]
+
+
+def text_of(reply):
+    """
+    Extract all text blocks from the model's response,
+    join them with newlines, and remove surrounding whitespace.
+    """
+
+    content = reply.get("content", [])
+
+    texts = [
+        block.get("text", "")
+        for block in content
+        if isinstance(block, dict) and block.get("type") == "text"
+    ]
+
+    return "\n".join(texts).strip()
