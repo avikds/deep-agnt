@@ -19,3 +19,20 @@ def score_question(question, chunk):
         "instructions": instructions,
         "criteria": LEVELS
     }
+
+
+def in_batches(items, size):
+    """
+    Split a list of items into consecutive batches of at most
+    the specified size.
+    """
+
+    # Ensure the batch size is valid.
+    if size <= 0:
+        raise ValueError("Batch size must be a positive integer.")
+
+    # Create consecutive batches using list slicing.
+    return [
+        items[i:i + size]
+        for i in range(0, len(items), size)
+    ]
